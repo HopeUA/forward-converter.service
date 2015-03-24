@@ -1,0 +1,6 @@
+node_modules/
+tools/
+config/default.json
+data/*.xlsx
+
+.idea/
