@@ -18,10 +18,51 @@ router.post('/jobs', function(req, res, next) {
     var data = req.body.data;
     var episodeDataQueue = [];
 
+    var nextEpisodeData = function(idx){
+         idx = idx || 0;
+
+         if (!(idx in episodeDataQueue)) {
+             saveXls();
+             return;
+         }
+
+         var code      = episodeDataQueue[idx].code;
+         var url       = mediaAPIendpoint + '/episodes/' + code + '?token=' + mediaAPItoken;
+         var nextIndex = idx + 1;
+
+         var options = {
+             url: url
+         };
+         request(options, function(error, response, body){
+
+             if (response.statusCode == 200) {
+                 var data = JSON.parse(body);
+
+                 episodeDataQueue[idx].title   = data.title;
+                 episodeDataQueue[idx].program = data.program;
+                 episodeDataQueue[idx].author  = data.author;
+                 episodeDataQueue[idx].guests  = data.guests;
+             }
+
+             nextEpisodeData(nextIndex);
+         });
+    };
+
     parser.parseString(data, function(err, result){
         var item;
         var codePattern = new RegExp('[A-Z]{4}\\d{5}');
         var converted = [];
+
+        if (err) {
+            res.status(401);
+            res.json({
+                error: {
+                    code: 'FC-001',
+                    message: 'Непонятный формат файла'
+                }
+            });
+            return;
+        }
 
         for (item of result.root.item) {
 
@@ -40,6 +81,8 @@ router.post('/jobs', function(req, res, next) {
                 }
             );
         }
+
+        nextEpisodeData();
     });
 
     var saveXls = function (){
@@ -77,37 +120,6 @@ router.post('/jobs', function(req, res, next) {
             'xlsx': file
         });
     };
-
-    var nextEpisodeData = function(idx){
-        idx = idx || 0;
-
-        if (!(idx in episodeDataQueue)) {
-            saveXls();
-            return;
-        }
-
-        var code      = episodeDataQueue[idx].code;
-        var url       = mediaAPIendpoint + '/episodes/' + code + '?token=' + mediaAPItoken;
-        var nextIndex = idx + 1;
-
-        var options = {
-            url: url
-        };
-        request(options, function(error, response, body){
-
-            if (response.statusCode == 200) {
-                var data = JSON.parse(body);
-
-                episodeDataQueue[idx].title   = data.title;
-                episodeDataQueue[idx].program = data.program;
-                episodeDataQueue[idx].author  = data.author;
-                episodeDataQueue[idx].guests  = data.guests;
-            }
-
-            nextEpisodeData(nextIndex);
-        });
-    };
-    nextEpisodeData();
 });
 
 module.exports = router;
