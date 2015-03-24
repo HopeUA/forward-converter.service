@@ -9,8 +9,6 @@ var app = express();
 app.use(logger('dev'));
 app.use(bodyParser.json());
 
-app.use('/v1', jobs);
-
 // Headers for REST calls
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -18,6 +16,8 @@ app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type');
   next();
 });
+
+app.use('/v1', jobs);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
