@@ -54,7 +54,7 @@ router.post('/jobs', function(req, res, next) {
         var converted = [];
 
         if (err) {
-            res.status(401);
+            res.status(400);
             res.json({
                 error: {
                     code: 'FC-001',
