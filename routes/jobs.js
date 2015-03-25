@@ -34,7 +34,6 @@ router.post('/jobs', function(req, res, next) {
              url: url
          };
          request(options, function(error, response, body){
-
              if (response.statusCode == 200) {
                  var data = JSON.parse(body);
 
@@ -98,6 +97,7 @@ router.post('/jobs', function(req, res, next) {
 
     var saveXls = function (){
         var data = [[
+            'Дата',
             'Таймкод',
             'Длительность',
             'Код',
@@ -109,6 +109,7 @@ router.post('/jobs', function(req, res, next) {
         var item = null;
         for (item of episodeDataQueue) {
             data.push([
+                item.date,
                 item.time,
                 item.duration,
                 item.code,
