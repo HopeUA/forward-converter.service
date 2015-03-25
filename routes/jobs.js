@@ -64,25 +64,36 @@ router.post('/jobs', function(req, res, next) {
             return;
         }
 
-        for (item of result.root.item) {
+        try {
+            for (item of result.root.item) {
 
-            var match = codePattern.exec(item.$.file);
-            if (match == null) {
-                continue;
+                var match = codePattern.exec(item.$.file);
+                if (match == null) {
+                    continue;
+                }
+
+                var code = match[0];
+                episodeDataQueue.push(
+                    {
+                        code: code,
+                        date: item.$.date,
+                        time: item.$.time,
+                        duration: item.$.duration
+                    }
+                );
             }
 
-            var code = match[0];
-            episodeDataQueue.push(
-                {
-                    code: code,
-                    date: item.$.date,
-                    time: item.$.time,
-                    duration: item.$.duration
+            nextEpisodeData();
+        } catch (xmlError) {
+            res.status(400);
+            res.json({
+                error: {
+                    code: 'FC-002',
+                    message: 'Ошибка структуры файла: ' + xmlError.message
                 }
-            );
+            });
         }
 
-        nextEpisodeData();
     });
 
     var saveXls = function (){
