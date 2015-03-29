@@ -5,6 +5,7 @@ var xml2js  = require('xml2js');
 var request = require('request');
 var xlsx    = require('node-xlsx');
 var config  = require('config');
+var timecode = require('../lib/timecode');
 
 var parser = new xml2js.Parser({
     normalizeTags: true,
@@ -14,7 +15,7 @@ var parser = new xml2js.Parser({
 var mediaAPIendpoint = config.get('mediaApi.endpoint');
 var mediaAPItoken    = config.get('mediaApi.token');
 
-router.post('/jobs', function(req, res, next) {
+router.post('/reports', function(req, res, next) {
     var data = req.body.data;
     var episodeDataQueue = [];
 
@@ -97,27 +98,47 @@ router.post('/jobs', function(req, res, next) {
 
     var saveXls = function (){
         var data = [[
-            'Дата',
-            'Таймкод',
-            'Длительность',
-            'Код',
             'Программа',
             'Тема',
+            'Длительность',
+            'Таймкод',
+            'Автор',
             'Ведущий',
-            'Гости'
+            'Гости',
+            'Код',
+            'Дата'
         ]];
         var item = null;
         for (item of episodeDataQueue) {
-            data.push([
-                item.date,
-                item.time,
-                item.duration,
-                item.code,
-                item.program,
-                item.title,
-                item.author,
-                item.guests
-            ]);
+            var dateStart = timecode.stringToUnix(item.time, item.date);
+            var duration  = timecode.stringToUnix(item.duration);
+            var dateEnd   = dateStart + duration;
+
+            try {
+                data.push([
+                    item.program,
+                    item.title,
+                    timecode.unixToString(duration, "h:m:s"),
+                    timecode.unixToString(dateStart, "h:m") + ' – ' + timecode.unixToString(dateEnd, "h:m"),
+                    '',
+                    item.author,
+                    item.guests,
+                    item.code,
+                    item.date
+                ]);
+            } catch (error) {
+                data.push([
+                    error.message,
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    ''
+                ]);
+            }
         }
 
         var buffer = xlsx.build([{name: item.date, data: data}]);
