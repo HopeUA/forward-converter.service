@@ -2,7 +2,7 @@ var express    = require('express');
 var logger     = require('morgan');
 var bodyParser = require('body-parser');
 
-var jobs = require('./routes/jobs');
+var reports = require('./routes/reports');
 
 var app = express();
 
@@ -17,7 +17,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use('/v1', jobs);
+app.use('/v1', reports);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -26,6 +26,5 @@ app.use(function(req, res, next) {
   next(err);
 });
 
-// error handlers
 
 module.exports = app;

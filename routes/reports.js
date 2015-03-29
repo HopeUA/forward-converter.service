@@ -15,7 +15,7 @@ var parser = new xml2js.Parser({
 var mediaAPIendpoint = config.get('mediaApi.endpoint');
 var mediaAPItoken    = config.get('mediaApi.token');
 
-router.post('/reports', function(req, res, next) {
+router.post('/jobs', function(req, res, next) {
     var data = req.body.data;
     var episodeDataQueue = [];
 
