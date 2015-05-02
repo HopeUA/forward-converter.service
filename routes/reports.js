@@ -22,35 +22,43 @@ router.post('/jobs', function(req, res, next) {
     var nextEpisodeData = function(idx){
          idx = idx || 0;
 
+         var codePattern = /[A-Z]{4}\d{5}/;
+
          if (!(idx in episodeDataQueue)) {
              saveXls();
              return;
          }
 
+        var nextIndex = idx + 1;
          var code      = episodeDataQueue[idx].code;
-         var url       = mediaAPIendpoint + '/episodes/' + code + '?token=' + mediaAPItoken;
-         var nextIndex = idx + 1;
 
-         var options = {
-             url: url
-         };
-         request(options, function(error, response, body){
-             if (response.statusCode == 200) {
-                 var data = JSON.parse(body);
+        if (codePattern.test(code)) {
+            var url       = mediaAPIendpoint + '/episodes/' + code + '?token=' + mediaAPItoken;
 
-                 episodeDataQueue[idx].title   = data.title;
-                 episodeDataQueue[idx].program = data.program;
-                 episodeDataQueue[idx].author  = data.author;
-                 episodeDataQueue[idx].guests  = data.guests;
-             }
+            var options = {
+                url: url
+            };
+            request(options, function(error, response, body){
+                if (response.statusCode == 200) {
+                    var data = JSON.parse(body);
 
-             nextEpisodeData(nextIndex);
-         });
+                    episodeDataQueue[idx].title   = data.title;
+                    episodeDataQueue[idx].program = data.program;
+                    episodeDataQueue[idx].author  = data.author;
+                    episodeDataQueue[idx].guests  = data.guests;
+                }
+
+                nextEpisodeData(nextIndex);
+            });
+        } else {
+            nextEpisodeData(nextIndex);
+        }
+
     };
 
     parser.parseString(data, function(err, result){
         var item;
-        var codePattern = new RegExp('[A-Z]{4}\\d{5}');
+        var codePattern = /([^\\]+)\.mov/;
         var converted = [];
 
         if (err) {
@@ -72,7 +80,7 @@ router.post('/jobs', function(req, res, next) {
                     continue;
                 }
 
-                var code = match[0];
+                var code = match[1];
                 episodeDataQueue.push(
                     {
                         code: code,
