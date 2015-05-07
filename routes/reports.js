@@ -23,6 +23,7 @@ router.post('/jobs', function(req, res, next) {
          idx = idx || 0;
 
          var codePattern = /[A-Z]{4}\d{5}/;
+        var infoPattern = /INFO_/;
 
          if (!(idx in episodeDataQueue)) {
              saveXls();
@@ -30,7 +31,7 @@ router.post('/jobs', function(req, res, next) {
          }
 
         var nextIndex = idx + 1;
-         var code      = episodeDataQueue[idx].code;
+        var code      = episodeDataQueue[idx].code;
 
         if (codePattern.test(code)) {
             var url       = mediaAPIendpoint + '/episodes/' + code + '?token=' + mediaAPItoken;
@@ -50,7 +51,13 @@ router.post('/jobs', function(req, res, next) {
 
                 nextEpisodeData(nextIndex);
             });
+        } else if (infoPattern.test(code)) {
+            episodeDataQueue[idx].title   = 'Анонс';
+            episodeDataQueue[idx].program = 'Анонс';
+            nextEpisodeData(nextIndex);
         } else {
+            episodeDataQueue[idx].title   = 'Рубрикатор';
+            episodeDataQueue[idx].program = 'Рубрикатор';
             nextEpisodeData(nextIndex);
         }
 
