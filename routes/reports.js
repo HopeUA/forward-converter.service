@@ -20,15 +20,15 @@ router.post('/jobs', function(req, res, next) {
     var episodeDataQueue = [];
 
     var nextEpisodeData = function(idx){
-         idx = idx || 0;
+        idx = idx || 0;
 
-         var codePattern = /[A-Z]{4}\d{5}/;
+        var codePattern = /[A-Z]{4}\d{5}/;
         var infoPattern = /INFO_/;
 
-         if (!(idx in episodeDataQueue)) {
-             saveXls();
-             return;
-         }
+        if (!(idx in episodeDataQueue)) {
+            saveXls();
+            return;
+        }
 
         var nextIndex = idx + 1;
         var code      = episodeDataQueue[idx].code;
@@ -44,7 +44,7 @@ router.post('/jobs', function(req, res, next) {
                     var data = JSON.parse(body);
 
                     episodeDataQueue[idx].title   = data.title;
-                    episodeDataQueue[idx].program = data.program;
+                    episodeDataQueue[idx].program = data.show.title;
                     episodeDataQueue[idx].author  = data.author;
                     episodeDataQueue[idx].guests  = data.guests;
                 }
