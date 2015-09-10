@@ -22,7 +22,7 @@ router.post('/jobs', function(req, res, next) {
     var nextEpisodeData = function(idx){
         idx = idx || 0;
 
-        var codePattern = /[A-Z]{4}\d{5}/;
+        var codePattern = /^[A-Z]{4}\d{5}$/;
         var infoPattern = /INFO_/;
         var anonsPattern = /anons/;
 
