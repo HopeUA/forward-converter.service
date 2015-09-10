@@ -24,6 +24,7 @@ router.post('/jobs', function(req, res, next) {
 
         var codePattern = /[A-Z]{4}\d{5}/;
         var infoPattern = /INFO_/;
+        var anonsPattern = /anons/;
 
         if (!(idx in episodeDataQueue)) {
             saveXls();
@@ -51,7 +52,7 @@ router.post('/jobs', function(req, res, next) {
 
                 nextEpisodeData(nextIndex);
             });
-        } else if (infoPattern.test(code)) {
+        } else if (infoPattern.test(code) || anonsPattern.test(code)) {
             episodeDataQueue[idx].title   = 'Анонс';
             episodeDataQueue[idx].program = 'Анонс';
             nextEpisodeData(nextIndex);
