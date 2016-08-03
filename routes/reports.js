@@ -159,7 +159,7 @@ router.post('/jobs', function(req, res, next) {
 
         var buffer = xlsx.build([{name: item.date, data: data}]);
         fs.writeFile('data/' + item.date + '.xlsx', buffer, function(){
-            var file = 'http://' + req.headers.host + '/data/' + item.date + '.xlsx';
+            var file = req.protocol + '://' + req.headers.host + '/data/' + item.date + '.xlsx';
             sendResponse(file);
         });
     };
