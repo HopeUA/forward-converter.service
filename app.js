@@ -17,6 +17,7 @@ app.use(function (req, res, next) {
   next();
 });
 
+app.use('/data', express.static(__dirname + '/data'));
 app.use('/v1', reports);
 
 // catch 404 and forward to error handler
