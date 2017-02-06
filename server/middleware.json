@@ -7,13 +7,14 @@
   },
   "routes": {
     "./middlewares/Converter": {
-      "methods": ["POST"]
+      "methods": ["POST"],
+      "paths": ["/v2/files"]
     }
   },
   "files": {
-    "./middlewares/Static": {
-      "methods": ["GET", "HEAD"],
-      "paths": ["/v2/files"]
+    "loopback#static": {
+      "paths": "/data",
+      "params": "$!../data"
     }
   },
   "final": {
