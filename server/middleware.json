@@ -1,0 +1,25 @@
+{
+  "initial": {
+    "./middlewares/HidePoweredBy": {}
+  },
+  "parse": {
+    "body-parser#raw": {}
+  },
+  "routes": {
+    "./middlewares/Converter": {
+      "methods": ["POST"]
+    }
+  },
+  "files": {
+    "./middlewares/Static": {
+      "methods": ["GET", "HEAD"],
+      "paths": ["/v2/files"]
+    }
+  },
+  "final": {
+    "loopback#urlNotFound": {}
+  },
+  "final:after": {
+    "strong-error-handler": {}
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "log-converter.ru.rest",
+  "description": "HopeTv.RU Log Converter Service",
+  "version": "2.0.0",
+  "main": "server/server.js",
+  "license": "MIT",
+  "author": "Sergey Sadovoi <sergey@hope.ua>",
+  "scripts": {
+    "start": "NODE_PATH=. NODE_ENV=production node -r babel-register .",
+    "dev": "NODE_PATH=. NODE_ENV=development nodemon --exec \"node -r babel-register .\""
+  },
+  "dependencies": {
+    "babel-plugin-transform-async-to-generator": "^6.22.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.22.0",
+    "babel-register": "^6.22.0",
+    "body-parser": "^1.16.0",
+    "fs-extra-promise": "^0.4.1",
+    "loopback": "^3.2.1",
+    "loopback-boot": "^2.23.0",
+    "moment": "^2.17.1",
+    "node-fetch": "^1.6.3",
+    "node-xlsx": "^0.7.4",
+    "strong-error-handler": "^1.0.1"
+  },
+  "babel": {
+    "plugins": [
+      "transform-es2015-modules-commonjs",
+      "transform-async-to-generator"
+    ]
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HopeUA/log-converter.ru.rest"
+  }
+}
