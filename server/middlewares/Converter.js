@@ -9,6 +9,12 @@ import wrap from 'common/utils/wrap';
 const config = App.get('service');
 const services = App.get('services');
 
+const eventTypes = {
+    EPISODE: 'episode',
+    ANONS: 'anons',
+    CATEGORY: 'category'
+};
+
 async function getMediaInfo(uid) {
     const url = `${services.media.url}/episodes/${uid}?token=${services.media.token}`;
     const response = await fetch(url);
@@ -19,7 +25,7 @@ async function getMediaInfo(uid) {
 async function parseLog(log) {
     const uidPattern = /([A-Z]{4}\d{5})/;
 
-    const result = log.split("\n").reduce((episodes, rowData) => {
+    const result = log.split("\n").reduce((events, rowData) => {
         const row = rowData.split("\t").reduce((row, el, index) => {
             switch (index) {
                 case 0:
@@ -40,56 +46,89 @@ async function parseLog(log) {
                         row.uid = match[1];
                     }
                     break;
+                case 9:
+                    if (el.search('rubrikatory') !== -1) {
+                        row.type = eventTypes.CATEGORY;
+                    } else if (el.search('anons') !== -1) {
+                        row.type = eventTypes.ANONS;
+                    } else if (row.uid) {
+                        row.type = eventTypes.EPISODE;
+                    }
+                    break;
             }
 
             return row;
         }, {});
-        episodes.push(row);
+        events.push(row);
 
-        return episodes;
-    }, []).filter((episode) => {
-        return episode.status === 'played' && episode.success && episode.uid
+        return events;
+    }, []).filter((event) => {
+        return event.status === 'played' && event.success && event.type
     });
 
-    const episodes = [];
+    const events = [];
     for (const row of result) {
-        const info = await getMediaInfo(row.uid);
-        episodes.push({
-            uid: row.uid,
-            date: {
-                start: moment(row.dateStart),
-                end: moment(row.dateEnd)
-            },
-            duration: info.duration,
-            title: info.title,
-            show: info.show.title,
-            author: info.author,
-            guests: info.guests
-        });
+        switch (row.type) {
+            case eventTypes.EPISODE:
+                const info = await getMediaInfo(row.uid);
+                events.push({
+                    uid: row.uid,
+                    date: {
+                        start: moment(row.dateStart),
+                        end: moment(row.dateEnd)
+                    },
+                    duration: info.duration,
+                    title: info.title,
+                    show: info.show.title,
+                    author: info.author,
+                    guests: info.guests
+                });
+                break;
+            case eventTypes.CATEGORY:
+                events.push({
+                    show: 'Рубрикатор',
+                    date: {
+                        start: moment(row.dateStart),
+                        end: moment(row.dateEnd)
+                    }
+                });
+                break;
+            case eventTypes.ANONS:
+                events.push({
+                    show: 'Анонс',
+                    date: {
+                        start: moment(row.dateStart),
+                        end: moment(row.dateEnd)
+                    }
+                });
+                break;
+        }
+
     }
 
-    return episodes;
+    return events;
 }
 
-async function writeXls(episodes) {
+async function writeXls(events) {
     let currentDate = null;
-    const data = episodes.map((episode) => {
-        const dateStart = episode.date.start.utcOffset('+03:00');
-        const dateEnd = episode.date.end.utcOffset('+03:00');
+    const data = events.map((event) => {
+        console.log(event);
+        const dateStart = event.date.start.utcOffset('+03:00');
+        const dateEnd = event.date.end.utcOffset('+03:00');
         const duration = moment.utc(dateEnd.diff(dateStart));
         if (!currentDate) {
             currentDate = dateEnd.clone();
         }
 
         return [
-            episode.show,
-            episode.title,
+            event.show || '',
+            event.title || '',
             duration.format('HH:mm:ss'),
             dateStart.format('HH:mm') + ' – ' + dateEnd.format('HH:mm'),
             '',
-            episode.author,
-            episode.guests,
-            episode.uid,
+            event.author || '',
+            event.guests || '',
+            event.uid || '',
             dateStart.format()
         ];
     });
@@ -123,8 +162,8 @@ async function writeXls(episodes) {
 
 module.exports = () => {
     return wrap(async (req, res) => {
-        const episodes = await parseLog(req.body.toString());
-        const xls = await writeXls(episodes);
+        const events = await parseLog(req.body.toString());
+        const xls = await writeXls(events);
 
         res.status(201);
         res.header({
