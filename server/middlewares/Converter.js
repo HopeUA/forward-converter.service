@@ -1,4 +1,4 @@
-import App from 'server/server';
+import app from 'server/server';
 import path from 'path';
 import fs from 'fs-extra-promise';
 import fetch from 'node-fetch';
@@ -6,8 +6,8 @@ import xlsx from 'node-xlsx';
 import moment from 'moment';
 import wrap from 'common/utils/wrap';
 
-const config = App.get('service');
-const services = App.get('services');
+const config = app.get('service');
+const services = app.get('services');
 
 const eventTypes = {
     EPISODE: 'episode',
@@ -23,7 +23,7 @@ async function getMediaInfo(uid) {
 }
 
 async function parseLog(log) {
-    const uidPattern = /([A-Z]{4}\d{5})/;
+    const uidPattern = /(.+)\.[a-zA-Z0-9]+$/;
 
     const result = log.split("\n").reduce((events, rowData) => {
         const row = rowData.split("\t").reduce((row, el, index) => {
@@ -86,7 +86,9 @@ async function parseLog(log) {
                 break;
             case eventTypes.CATEGORY:
                 events.push({
+                    uid: row.uid,
                     show: 'Рубрикатор',
+                    title: 'Рубрикатор',
                     date: {
                         start: moment(row.dateStart),
                         end: moment(row.dateEnd)
@@ -95,7 +97,9 @@ async function parseLog(log) {
                 break;
             case eventTypes.ANONS:
                 events.push({
+                    uid: row.uid,
                     show: 'Анонс',
+                    title: 'Анонс',
                     date: {
                         start: moment(row.dateStart),
                         end: moment(row.dateEnd)
@@ -112,7 +116,6 @@ async function parseLog(log) {
 async function writeXls(events) {
     let currentDate = null;
     const data = events.map((event) => {
-        console.log(event);
         const dateStart = event.date.start.utcOffset('+03:00');
         const dateEnd = event.date.end.utcOffset('+03:00');
         const duration = moment.utc(dateEnd.diff(dateStart));
