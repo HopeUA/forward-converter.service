@@ -24,6 +24,7 @@ async function getMediaInfo(uid) {
 
 async function parseLog(log) {
     const uidPattern = /(.+)\.[a-zA-Z0-9]+$/;
+    const episodePattern = /^[A-Z]{4}\d{5}$/;
 
     const result = log.split("\n").reduce((events, rowData) => {
         const row = rowData.split("\t").reduce((row, el, index) => {
@@ -51,7 +52,7 @@ async function parseLog(log) {
                         row.type = eventTypes.CATEGORY;
                     } else if (el.search('anons') !== -1) {
                         row.type = eventTypes.ANONS;
-                    } else if (row.uid) {
+                    } else if (episodePattern.test(row.uid)) {
                         row.type = eventTypes.EPISODE;
                     }
                     break;
@@ -71,6 +72,9 @@ async function parseLog(log) {
         switch (row.type) {
             case eventTypes.EPISODE:
                 const info = await getMediaInfo(row.uid);
+                if (!info.show) {
+                    console.log(row.uid);
+                }
                 events.push({
                     uid: row.uid,
                     date: {
