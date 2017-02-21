@@ -1,7 +1,7 @@
 {
   "name": "log-converter.ru.rest",
   "description": "HopeTv.RU Log Converter Service",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "main": "server/server.js",
   "license": "MIT",
   "author": "Sergey Sadovoi <sergey@hope.ua>",
