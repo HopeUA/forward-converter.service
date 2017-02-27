@@ -8,7 +8,7 @@
   "routes": {
     "./middlewares/Status": {
       "methods": ["GET"],
-      "paths": ["/"]
+      "paths": ["/$"]
     },
     "./middlewares/Converter": {
       "methods": ["POST"],
