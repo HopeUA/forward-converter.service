@@ -74,7 +74,7 @@ async function parseLog(log) {
 
         return currentRow;
     });
-console.log(result);
+
     const events = [];
     for (const row of result) {
         switch (row.type) {

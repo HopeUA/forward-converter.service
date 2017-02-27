@@ -6,6 +6,10 @@
     "body-parser#raw": {}
   },
   "routes": {
+    "./middlewares/Status": {
+      "methods": ["GET"],
+      "paths": ["/"]
+    },
     "./middlewares/Converter": {
       "methods": ["POST"],
       "paths": ["/v2/files"]
