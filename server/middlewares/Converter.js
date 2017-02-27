@@ -65,8 +65,16 @@ async function parseLog(log) {
         return events;
     }, []).filter((event) => {
         return event.status === 'played' && event.success && event.type
-    });
+    }).map((row, idx, rows) => {
+        const currentRow = row;
+        const nextRow = rows[idx+1];
+        if (nextRow) {
+            currentRow.dateEnd = nextRow.dateStart;
+        }
 
+        return currentRow;
+    });
+console.log(result);
     const events = [];
     for (const row of result) {
         switch (row.type) {
