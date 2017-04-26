@@ -22,32 +22,34 @@ async function getMediaInfo(uid) {
     return await response.json();
 }
 
-async function parseLog(log) {
-    const uidPattern = /(.+)\.[a-zA-Z0-9]+$/;
+function timecodeToMoment(tc, date) {
+    return moment(`${date.year()} ${parseInt(date.month(), 10) + 1} ${date.date()} ${tc} +0300`, 'YYYY M D HH:mm:ss:SS Z');
+}
+function timecodeToSeconds(tc) {
+    const parts = tc.split(':');
+
+    return parseInt(parts[0], 10) * 60 * 60 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+}
+
+async function parseLog(log, currentDate) {
+    const uidPattern = /([^\\]+)\.[a-zA-Z0-9]+$/;
     const episodePattern = /^[A-Z]{4}\d{5}$/;
 
     const result = log.split("\n").reduce((events, rowData) => {
         const row = rowData.split("\t").reduce((row, el, index) => {
             switch (index) {
                 case 0:
-                    row.dateEnd = el;
+                    row.timeStart = el;
                     break;
                 case 1:
-                    row.dateStart = el;
+                    row.duration = timecodeToSeconds(el);
                     break;
                 case 2:
-                    row.status = el;
-                    break;
-                case 3:
-                    row.success = el === 'ok';
-                    break;
-                case 4:
-                    const match = uidPattern.exec(el);
+                    const match = uidPattern.exec(el.trim());
                     if (match !== null) {
                         row.uid = match[1];
                     }
-                    break;
-                case 9:
+
                     if (el.search('rubrikatory') !== -1) {
                         row.type = eventTypes.CATEGORY;
                     } else if (el.search('anons') !== -1) {
@@ -63,13 +65,11 @@ async function parseLog(log) {
         events.push(row);
 
         return events;
-    }, []).filter((event) => {
-        return event.status === 'played' && event.success && event.type
-    }).map((row, idx, rows) => {
+    }, []).map((row, idx, rows) => {
         const currentRow = row;
         const nextRow = rows[idx+1];
         if (nextRow) {
-            currentRow.dateEnd = nextRow.dateStart;
+            currentRow.timeEnd = nextRow.timeStart;
         }
 
         return currentRow;
@@ -86,8 +86,8 @@ async function parseLog(log) {
                 events.push({
                     uid: row.uid,
                     date: {
-                        start: moment(row.dateStart),
-                        end: moment(row.dateEnd)
+                        start: timecodeToMoment(row.timeStart, currentDate),
+                        end: row.timeEnd ? timecodeToMoment(row.timeEnd, currentDate) : timecodeToMoment(row.timeStart, currentDate).add(row.duration, 's')
                     },
                     duration: info.duration,
                     title: info.title,
@@ -102,8 +102,8 @@ async function parseLog(log) {
                     show: 'Рубрикатор',
                     title: 'Рубрикатор',
                     date: {
-                        start: moment(row.dateStart),
-                        end: moment(row.dateEnd)
+                        start: timecodeToMoment(row.timeStart, currentDate),
+                        end: row.timeEnd ? timecodeToMoment(row.timeEnd, currentDate) : timecodeToMoment(row.timeStart, currentDate).add(row.duration, 's')
                     }
                 });
                 break;
@@ -113,8 +113,8 @@ async function parseLog(log) {
                     show: 'Анонс',
                     title: 'Анонс',
                     date: {
-                        start: moment(row.dateStart),
-                        end: moment(row.dateEnd)
+                        start: timecodeToMoment(row.timeStart, currentDate),
+                        end: row.timeEnd ? timecodeToMoment(row.timeEnd, currentDate) : timecodeToMoment(row.timeStart, currentDate).add(row.duration, 's')
                     }
                 });
                 break;
@@ -125,15 +125,11 @@ async function parseLog(log) {
     return events;
 }
 
-async function writeXls(events) {
-    let currentDate = null;
+async function writeXls(events, currentDate) {
     const data = events.map((event) => {
         const dateStart = event.date.start.utcOffset('+03:00');
         const dateEnd = event.date.end.utcOffset('+03:00');
         const duration = moment.utc(dateEnd.diff(dateStart));
-        if (!currentDate) {
-            currentDate = dateEnd.clone();
-        }
 
         return [
             event.show || '',
@@ -177,8 +173,20 @@ async function writeXls(events) {
 
 module.exports = () => {
     return wrap(async (req, res) => {
-        const events = await parseLog(req.body.toString());
-        const xls = await writeXls(events);
+        const fileName = req.headers['x-hope-filename'];
+        const match = /(\d{2})_(\d{2})_(\d{4})/.exec(fileName);
+
+        let currentDate = moment();
+        if (match !== null) {
+            currentDate = moment({
+                day: match[1],
+                month: parseInt(match[2], 10) - 1,
+                year: match[3]
+            });
+        }
+
+        const events = await parseLog(req.body.toString(), currentDate);
+        const xls = await writeXls(events, currentDate);
 
         res.status(201);
         res.header({
